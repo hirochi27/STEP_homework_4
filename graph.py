@@ -90,6 +90,8 @@ class Wikipedia:
         d = deque()
         visited = set() #一回訪れたところは、キューに追加しないようにするため、記録する
 
+        print(self.links)
+        print(self.titles)
 
         #与えられた単語のIDを探す
         #self.title_to_id :　タイトル → ID　の辞書
@@ -165,6 +167,75 @@ class Wikipedia:
     def find_most_popular_pages(self):
         #------------------------#
         # Write your code here!  #
+
+        #重みづけ用
+        #全てのノードに初期値1.0を割り振る(ページランク専用の辞書を作る)
+        weight = {}
+        for node in self.links:
+            weight[node] = 1.0
+            #print(weight)
+
+
+        # flag = False
+        # while flag == False:
+        #変化が無くなるまでループする、っていう条件を入れる
+
+        #各ノードの隣接ノードに、重みを均等に割り振る
+        #隣接ノードの個数から、分配する重みを計算
+        count = 0
+        while count <= 5:
+
+            #元の重みを保持
+            prev_weight = weight.copy() 
+            #新しく分配する重みを保持
+            new_weight = {} 
+            for node in self.links:
+                new_weight[node] = 0
+
+            for node in weight:
+                count_nodes = len(self.links[node])
+                #print(count_nodes)
+                if count_nodes == 0: #隣接ノードがない時
+                    count_even_next = 0
+                    count_even_all = prev_weight[node] / len(self.links)
+                else:
+                    count_even_next = prev_weight[node] / 100 * 85 / count_nodes
+                    count_even_all = prev_weight[node] / 100 * 15 / len(self.links)
+
+
+                #隣接ノードに85%を分配
+                for next_node in self.links[node]:
+                    new_weight[next_node] += count_even_next
+
+                #全ノードに15%を分配
+                for all_node in self.links:
+                    new_weight[all_node] += count_even_all
+
+            
+            #新しい重みを辞書本体に適用
+            weight = new_weight.copy()
+
+
+            count += 1
+            weight_count = 0
+            for node in weight:
+                weight_count += weight[node]
+
+            print(weight_count)
+            print(len(self.links))
+            assert abs(len(self.links) - weight_count) < 10 ** (-10)            
+            print(weight)
+            print(count_even_all)
+
+
+            
+
+            
+        
+
+
+
+
         #------------------------#
         pass
 
@@ -216,10 +287,12 @@ if __name__ == "__main__":
     #wikipedia.find_longest_titles()
     # Example
     #wikipedia.find_most_linked_pages()
+
+
     # Homework #1
     #wikipedia.find_shortest_path('A', 'D')
-    wikipedia.find_shortest_path("渋谷", "パレートの法則")
+    #wikipedia.find_shortest_path("渋谷", "パレートの法則")
     # Homework #2
-    #wikipedia.find_most_popular_pages()
+    wikipedia.find_most_popular_pages()
     # Homework #3 (optional)
     #wikipedia.find_longest_path("渋谷", "池袋")
