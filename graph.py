@@ -1,5 +1,6 @@
 import sys
 import collections
+from collections import deque
 
 class Wikipedia:
 
@@ -16,6 +17,11 @@ class Wikipedia:
         # from the page whose ID is 1234.
         self.links = {}
 
+
+        #タイトルからIDを探すための辞書を作る
+        self.title_to_id = {}
+
+
         # Read the pages file into self.titles.
         with open(pages_file) as file:
             for line in file:
@@ -24,6 +30,9 @@ class Wikipedia:
                 assert not id in self.titles, id
                 self.titles[id] = title
                 self.links[id] = []
+
+                self.title_to_id[title] = id
+
         print("Finished reading %s" % pages_file)
 
         # Read the links file into self.links.
@@ -76,8 +85,80 @@ class Wikipedia:
     def find_shortest_path(self, start, goal):
         #------------------------#
         # Write your code here!  #
+        
+        path = []
+        d = deque()
+        visited = set() #一回訪れたところは、キューに追加しないようにするため、記録する
+
+
+        #与えられた単語のIDを探す
+        #self.title_to_id :　タイトル → ID　の辞書
+        start_ID = self.title_to_id[start]
+        goal_ID = self.title_to_id[goal]
+
+        visited.add(start_ID)
+        
+
+        #2番目のページをキューに入れる
+        next_pages = self.links[start_ID]
+        for page in next_pages:
+
+            #キューに入れる前に、"visited"にIDを記録（繰り返し参照しないようにするため）
+            if page not in visited:
+                visited.add(page)
+
+            #source：リンク元、target：リンク先
+            page = {"source": None, "target": page}
+            d.append(page)
+
+
+        #3番目以降のページをキューに入れる処理
+        #目的のページを見つけたらTeueにする
+        flag = False 
+        #popした値が目的の値だったらwhile文を抜ける
+        #"キューから取り出した値にリンクされたページ"を新しくキューに入れる        
+        while flag == False:
+            now_page = d.popleft()   
+
+
+            #取り出した値が目的のページだった場合、Trueに　→　whileを抜ける
+            if now_page["target"] == goal_ID:
+                print("complete")
+                flag = True
+                target = now_page
+                continue
+
+
+            #リンクされたページを更にキューに入れる
+            next_pages = self.links[now_page["target"]] #next_page:今のページにリンクされてるページたち
+            for page in next_pages:
+                #既に処理をしていたらとばす
+                if page in visited:
+                    continue
+                else:
+                    visited.add(page)
+                #キューに追加：sourceにリンク元のIDを入れることで後から経路を辿れるようにする
+                page = {"source": now_page, "target": page}
+                d.append(page)
+    
+
+        #pathをさかのぼる
+        path.append(target["target"])
+        source = target["source"]
+        while source != None:
+            #print("path!!!!!!!!!!")
+            path.insert(0, source["target"])#pathをさかのぼってリストの最初に入れていく
+            source = source["source"]
+        
+
+        path.insert(0, start_ID)
+        print(f"path:{path}")
+
+
+        wikipedia.assert_path(path, start, goal)
+
         #------------------------#
-        pass
+    
 
 
     # Homework #2: Calculate the page ranks and print the most popular pages.
@@ -119,20 +200,26 @@ class Wikipedia:
             assert(node not in visited)
             visited[node] = True
 
+        print("assert OK")
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
         print("usage: %s pages_file links_file" % sys.argv[0])
+        #実行時コマンド
+        #python3 graph.py wikipedia_dataset/wikipedia_dataset/pages_small.txt wikipedia_dataset/wikipedia_dataset/links_small.txt
+        #python3 graph.py wikipedia_dataset/wikipedia_dataset/pages_medium.txt wikipedia_dataset/wikipedia_dataset/links_medium.txt
         exit(1)
 
     wikipedia = Wikipedia(sys.argv[1], sys.argv[2])
     # Example
-    wikipedia.find_longest_titles()
+    #wikipedia.find_longest_titles()
     # Example
-    wikipedia.find_most_linked_pages()
+    #wikipedia.find_most_linked_pages()
     # Homework #1
+    #wikipedia.find_shortest_path('A', 'D')
     wikipedia.find_shortest_path("渋谷", "パレートの法則")
     # Homework #2
-    wikipedia.find_most_popular_pages()
+    #wikipedia.find_most_popular_pages()
     # Homework #3 (optional)
-    wikipedia.find_longest_path("渋谷", "池袋")
+    #wikipedia.find_longest_path("渋谷", "池袋")
