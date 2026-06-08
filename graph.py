@@ -176,22 +176,27 @@ class Wikipedia:
             #print(weight)
 
 
-        # flag = False
-        # while flag == False:
-        #変化が無くなるまでループする、っていう条件を入れる
-
-        #各ノードの隣接ノードに、重みを均等に割り振る
-        #隣接ノードの個数から、分配する重みを計算
         count = 0
-        while count <= 5:
+        # while count <= 5:
+        #各ノードの隣接ノードに、重みを均等に割り振る
+        flag = False
+        while flag == False:#重みに変化が無くなるまでループする
 
-            #元の重みを保持
+            count += 1
+            print(count)
+            if count % 10000 == 0:
+                print("processed:", count, "queue:", len(d), flush=True)
+                #print(f"count : {count}")
+
+            #元の重みを保持:こっちから重みを計算
             prev_weight = weight.copy() 
             #新しく分配する重みを保持
             new_weight = {} 
             for node in self.links:
                 new_weight[node] = 0
 
+
+            #それぞれのノードが分配する重みを計算
             for node in weight:
                 count_nodes = len(self.links[node])
                 #print(count_nodes)
@@ -204,40 +209,57 @@ class Wikipedia:
 
 
                 #隣接ノードに85%を分配
+                #ここドカ重い
                 for next_node in self.links[node]:
                     new_weight[next_node] += count_even_next
 
-                #全ノードに15%を分配
+                #全ノードに15%を分配 / 隣接ノードが無い場合は100%
+                #ここもドカ重い
                 for all_node in self.links:
                     new_weight[all_node] += count_even_all
 
-            
+
             #新しい重みを辞書本体に適用
             weight = new_weight.copy()
 
 
-            count += 1
+            #古い重みと、現在の重みの差を計算
+            #重みが変わらなくなったらwhile文を抜ける
+            for page in weight:
+                total = 0
+
+                #print(weight[page])
+                #print(prev_weight[page])
+
+                diff = weight[page] - prev_weight[page]
+                diff_ex = diff ** 2
+                total += diff_ex
+                #print(f"total:{total}")
+
+            if total < 0.01:
+                flag = True
+
+
+            #count += 1
+
+            #全体の重みが一定に保持されているかの判断
             weight_count = 0
             for node in weight:
                 weight_count += weight[node]
 
-            print(weight_count)
-            print(len(self.links))
-            assert abs(len(self.links) - weight_count) < 10 ** (-10)            
-            print(weight)
-            print(count_even_all)
+            #print(weight_count)
+            #print(len(self.links))
+            assert abs(len(self.links) - weight_count) < 10 ** (-10)  #少しのズレは許容        
+            #print(weight)
+            #print(count_even_all)
 
 
-            
-
-            
-        
-
-
-
+        #重みが一番大きいページを探す
+        max_weight_page = max(weight, key = weight.get)
+        print(f"一番大きなページ！：{max_weight_page}")
 
         #------------------------#
-        pass
+        
 
 
     # Homework #3 (optional):
